@@ -1,0 +1,5 @@
+.vscode
+
+src/SDL3*
+src/*.exe
+src/*.o
