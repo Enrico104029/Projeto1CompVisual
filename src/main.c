@@ -136,6 +136,139 @@ static bool MyImage_IsGrayScale(MyImage *image);
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
+bool MyWindow_initialize(MyWindow *window, const char *title, int width, int height, SDL_WindowFlags window_flags)
+{
+  SDL_Log("\tMyWindow_initialize(%s, %d, %d)", title, width, height);
+
+  if (!window)
+  {
+    SDL_Log("\t\t*** Erro: Janela/renderizador inválidos (window == NULL).");
+    return false;
+  }
+
+  return SDL_CreateWindowAndRenderer(title, width, height, window_flags, &window->window, &window->renderer);
+}
+
+// //------------------------------------------------------------------------------
+// //
+// //------------------------------------------------------------------------------
+void MyWindow_destroy(MyWindow *window)
+{
+  SDL_Log(">>> MyWindow_destroy()");
+
+  if (!window)
+  {
+    SDL_Log("\t*** Erro: Janela/renderizador inválidos (window == NULL).");
+    SDL_Log("<<< MyWindow_destroy()");
+    return;
+  }
+
+  SDL_Log("\tDestruindo MyWindow->renderer...");
+  SDL_DestroyRenderer(window->renderer);
+  window->renderer = NULL;
+
+  SDL_Log("\tDestruindo MyWindow->window...");
+  SDL_DestroyWindow(window->window);
+  window->window = NULL;
+
+  SDL_Log("<<< MyWindow_destroy()");
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void MyImage_destroy(MyImage *image)
+{
+  SDL_Log(">>> MyImage_destroy()");
+
+  if (!image)
+  {
+    SDL_Log("\t*** Erro: Imagem inválida (image == NULL).");
+    SDL_Log("<<< MyImage_destroy()");
+    return;
+  }
+
+  if (image->texture)
+  {
+    SDL_Log("\tDestruindo MyImage->texture...");
+    SDL_DestroyTexture(image->texture);
+    image->texture = NULL;
+  }
+
+  if (image->surface)
+  {
+    SDL_Log("\tDestruindo MyImage->surface...");
+    SDL_DestroySurface(image->surface);
+    image->surface = NULL;
+  }
+
+  SDL_Log("\tRedefinindo MyImage->rect...");
+  image->rect.x = image->rect.y = image->rect.w = image->rect.h = 0.0f;
+
+  SDL_Log("<<< MyImage_destroy()");
+}
+
+// //------------------------------------------------------------------------------
+// //
+// //------------------------------------------------------------------------------
+bool MyImage_update_texture_with_surface(MyImage* image, SDL_Renderer *renderer, SDL_Surface *surface)
+{
+  SDL_Log(">>> MyImage_update_texture_with_surface()");
+
+  if (!image)
+  {
+    SDL_Log("\t*** Erro: Imagem inválida (image == NULL).");
+    SDL_Log("<<< MyImage_update_texture_with_surface()");
+    return false;
+  }
+
+  if (!renderer)
+  {
+    SDL_Log("\t*** Erro: Renderer inválido (renderer == NULL).");
+    SDL_Log("<<< MyImage_update_texture_with_surface()");
+    return false;
+  }
+
+  if (!surface)
+  {
+    SDL_Log("\t*** Erro: Superfície inválida (surface == NULL).");
+    SDL_Log("<<< MyImage_update_texture_with_surface()");
+    return false;
+  }
+
+  SDL_DestroyTexture(image->texture);
+
+  image->texture = SDL_CreateTextureFromSurface(renderer, surface);
+  if (!image->texture)
+  {
+    SDL_Log("\t*** Erro ao criar textura: %s", SDL_GetError());
+    SDL_Log("<<< MyImage_update_texture_with_surface()");
+    return false;
+  }
+
+  SDL_Log("\tObtendo dimensões da textura...");
+  SDL_GetTextureSize(image->texture, &image->rect.w, &image->rect.h);
+
+  SDL_Log("<<< MyImage_update_texture_with_surface()");
+  return true;
+}
+
+// //------------------------------------------------------------------------------
+// //
+// //------------------------------------------------------------------------------
+bool MyImage_restore_texture(MyImage* image, SDL_Renderer *renderer)
+{
+  SDL_Log(">>> MyImage_restore_texture()");
+  
+  if (!MyImage_update_texture_with_surface(image, renderer, image->surface))
+  {
+    SDL_Log("\t*** Erro ao restaurar a textura da imagem.");
+    return false;
+  }
+
+  SDL_Log("<<< MyImage_restore_texture()");
+  return true;  
+}
 
 bool load_rgba32(const char *caminho, SDL_Renderer *renderer, MyImage *output_image)
 {
@@ -236,6 +369,23 @@ SDL_AppResult initialize(void)
       SDL_Log("<<< initialize()");
   }
 
+  SDL_Log("\tCriando janela e renderizador...");
+  if (!MyWindow_initialize(&g_window, WINDOW_TITLE, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, 0))
+  {
+    SDL_Log("\t*** Erro ao criar a janela e/ou renderizador: %s", SDL_GetError());
+    SDL_Log("<<< initialize()");
+    return SDL_APP_FAILURE;
+  }
+
+  //Criar janela filha
+  SDL_Log("\tCriando janela filha e renderizador...");
+  if (!MyWindow_initialize(&child_window, CHILD_WINDOW_TITLE, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, 0))
+  {
+    SDL_Log("\t*** Erro ao criar a janela e/ou renderizador: %s", SDL_GetError());
+    SDL_Log("<<< initialize()");
+    return SDL_APP_FAILURE;
+  }
+
   SDL_Log("<<< initialize()");
   return SDL_APP_CONTINUE;
 }
@@ -267,7 +417,25 @@ void shutdown(void)
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
+//Renderiza imagem e janela filha com base na variavel "equalizado"
+void render(void)
+{
+  SDL_Log(">>> render()");
+  //Janela Principal
+  SDL_SetRenderDrawColor(g_window.renderer, 20,20,20, 255);
+  SDL_RenderClear(g_window.renderer);
 
+  // Janela Filha
+  SDL_SetRenderDrawColor(child_window.renderer, 20, 20, 20, 255);
+  SDL_RenderClear(child_window.renderer);
+
+  //Renderizar textura da imagem
+  SDL_RenderTexture(g_window.renderer, g_image.texture, &g_image.rect,&g_image.rect);
+
+  SDL_RenderPresent(g_window.renderer);
+  SDL_RenderPresent(child_window.renderer);
+  SDL_Log("<<< render()");
+}
 
 //******************************************************************************
 // **IMPLEMENTACOES DO PROJETO 1
@@ -374,6 +542,42 @@ static bool MyImage_IsGrayScale(MyImage *image)
 //******************************************************************************
 // ** FIM IMPLEMENTACOES DO PROJETO 1
 //******************************************************************************
+static void loop(void)
+{
+  SDL_Log(">>> loop()");
+
+  render(); 
+
+  SDL_Event event;
+  bool isRunning = true;
+  while (isRunning)
+  {
+    bool must_refresh = false;
+    while (SDL_PollEvent(&event))
+    {
+      switch (event.type)
+      {
+        case SDL_EVENT_QUIT:
+          isRunning = false;
+          break;
+
+        //Ao clicar para fechar qualquer janela, encerrar programa
+        case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+          SDL_Window *closed_window = SDL_GetWindowFromID(event.window.windowID);
+          if (closed_window == g_window.window || closed_window == child_window.window)
+          {
+            isRunning = false;
+          }
+          break;
+      }
+    }
+    if(must_refresh){
+       render();
+    }
+  }
+  
+  SDL_Log("<<< loop()");
+}
 
 //------------------------------------------------------------------------------
 // 
@@ -394,6 +598,43 @@ int main(int argc, char *argv[])
 
   if (!load_rgba32(caminho_da_imagem, g_window.renderer, &g_image))
     return SDL_APP_FAILURE;
+  
+  SDL_Log("Criando cursores do mouse...");
+  defaultMouseCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
+  hourglassMouseCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
+  SDL_SetCursor(defaultMouseCursor);
+
+  // Altera tamanho da janela se a imagem for maior do que o tamanho padrão
+  int imageWidth = (int)g_image.rect.w;
+  int imageHeight = (int)g_image.rect.h;
+
+  SDL_SetWindowSize(g_window.window, imageWidth, imageHeight);
+
+
+  // Coloca a janela principal no centro
+  SDL_SetWindowPosition(g_window.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+  SDL_SyncWindow(g_window.window);
+
+  /*
+    Colocar a janela filha ao lado da janela pai
+  */
+  int x, y;
+  int w, h ;
+
+  // Pegar a posicao e tamanho da janela pai
+  SDL_GetWindowPosition(g_window.window, &x, &y);
+  SDL_GetWindowSize(g_window.window, &w, &h);
+ 
+  SDL_SetWindowPosition(child_window.window, x + w +20, SDL_WINDOWPOS_CENTERED);
+
+  //Verifica se imagem esta em escala de cinza,
+  //caso nao esteja, ela é convertida
+  if(!MyImage_IsGrayScale(&g_image))
+  {
+    MyImage_GrayScale(g_window.renderer, &g_image);
+  }
+
+  loop();
 
   return 0;
 }
