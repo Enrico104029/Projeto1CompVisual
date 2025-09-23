@@ -14,37 +14,37 @@ ________________________________________
 
 ## Novas Estruturas e Variáveis Globais
 
-•	Button: Uma nova struct foi criada para representar o botão de alternância, contendo suas dimensões (rect) e texto.
+**•	Button:** Uma nova struct foi criada para representar o botão de alternância, contendo suas dimensões (rect) e texto.
 
-•	Cores do Botão: Cores foram definidas para os três estados do botão: neutro (NEUTRAL_COLOR), com o mouse por cima (HOVER_COLOR) e clicado (CLICKED_COLOR).
+**•	Cores do Botão:** Cores foram definidas para os três estados do botão: neutro (NEUTRAL_COLOR), com o mouse por cima (HOVER_COLOR) e clicado (CLICKED_COLOR).
 
-•	INFO_HEIGHT: Uma constante que define a altura da área de informações na janela filha, onde o texto e o botão são exibidos.
+**•	INFO_HEIGHT:** Uma constante que define a altura da área de informações na janela filha, onde o texto e o botão são exibidos.
 
 ### Variáveis globais adicionadas:
 
-o	histograma: Um array para armazenar o histograma da imagem original em escala de cinza.
+**o	histograma:** Um array para armazenar o histograma da imagem original em escala de cinza.
 
-o	histograma_equalizado: Um array que armazena o histograma após o processo de equalização.
+**o	histograma_equalizado:** Um array que armazena o histograma após o processo de equalização.
 
-o	surface_equalizada: Uma superfície criada a partir da equalização do histograma, contendo os pixels da imagem processada.
+**o	surface_equalizada:** Uma superfície criada a partir da equalização do histograma, contendo os pixels da imagem processada.
 
-o	fonte: A fonte do texto utilizada na janela filha.
+**o	fonte:** A fonte do texto utilizada na janela filha.
 
-o	equalizado: Uma variável booleana que controla qual estado da imagem e do histograma é exibido. true indica a versão equalizada, e false a original. Esta variável guia a função de renderização.
+**o	equalizado:** Uma variável booleana que controla qual estado da imagem e do histograma é exibido. true indica a versão equalizada, e false a original. Esta variável guia a função de renderização.
 
-o	mouseNoBotao e botaoClicado: Variáveis que rastreiam o estado do mouse sobre o botão, controlando a sua cor.
+**o	mouseNoBotao e botaoClicado:** Variáveis que rastreiam o estado do mouse sobre o botão, controlando a sua cor.
 
 ________________________________________
 
 ## Funções Modificadas
 
-•	load_rgba32(): Modificada para receber um caminho de arquivo em vez de apenas o nome, e para verificar se a extensão é válida.
+**•	load_rgba32():** Modificada para receber um caminho de arquivo em vez de apenas o nome, e para verificar se a extensão é válida.
 
-•	initialize(): Agora inicializa a biblioteca TTF (para fontes) e a janela secundária do histograma.
+**•	initialize():** Agora inicializa a biblioteca TTF (para fontes) e a janela secundária do histograma.
 
-•	shutdown(): Responsável por finalizar a TTF e destruir a janela filha.
+**•	shutdown():** Responsável por finalizar a TTF e destruir a janela filha.
 
-•	render(): Esta função renderiza todos os elementos visuais. Ela verifica a variável equalizado para decidir se deve exibir a imagem e o histograma originais ou equalizados. Em seguida, desenha o histograma, exibe as informações da imagem e, por fim, desenha o botão com a cor apropriada, baseada no estado das variáveis mouseNoBotao e botaoClicado.
+**•	render():** Esta função renderiza todos os elementos visuais. Ela verifica a variável equalizado para decidir se deve exibir a imagem e o histograma originais ou equalizados. Em seguida, desenha o histograma, exibe as informações da imagem e, por fim, desenha o botão com a cor apropriada, baseada no estado das variáveis mouseNoBotao e botaoClicado.
 
 ________________________________________
 
