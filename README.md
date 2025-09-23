@@ -103,7 +103,7 @@ ________________________________________
 # Instruções para Compilação e Execução
 Para compilar e executar o projeto, siga os passos abaixo:
 
-**1.Clone o repositório do GitHub.**
+**1. Clone o repositório do GitHub.**
 
 **2. Instale as bibliotecas necessárias**: Certifique-se de que as bibliotecas SDL3, SDL3_image e SDL3_ttf estão instaladas em seu sistema.
 
