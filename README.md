@@ -50,21 +50,21 @@ ________________________________________
 
 ## Funções Adicionadas
 
-•	MyImage_GrayScale(): Converte a imagem para escala de cinza. Para cada pixel, aplica a fórmula $Y = 0.2125*R + 0.7154*G + 0.0721*B$ e atualiza os valores de R, G e B do pixel para Y.
+**•	MyImage_GrayScale():** Converte a imagem para escala de cinza. Para cada pixel, aplica a fórmula $Y = 0.2125*R + 0.7154*G + 0.0721*B$ e atualiza os valores de R, G e B do pixel para Y.
 
-•	Gerar_Histograma(): Preenche o array histograma. Ele itera sobre cada pixel da imagem, obtém sua intensidade e incrementa o nível correspondente no histograma.
+**•	Gerar_Histograma():** Preenche o array histograma. Ele itera sobre cada pixel da imagem, obtém sua intensidade e incrementa o nível correspondente no histograma.
 
-•	Desenhar_Histograma(): Desenha o histograma na janela filha. Primeiro, encontra o valor máximo para normalizar a escala, garantindo que o pico mais alto chegue ao topo da janela. Em seguida, desenha uma barra vertical para cada nível de intensidade.
+**•	Desenhar_Histograma():** Desenha o histograma na janela filha. Primeiro, encontra o valor máximo para normalizar a escala, garantindo que o pico mais alto chegue ao topo da janela. Em seguida, desenha uma barra vertical para cada nível de intensidade.
 
-•	Exibir_Texto(): Exibe a média de intensidade e o desvio padrão. Classifica a imagem como clara, média ou escura e com contraste baixo, médio ou alto. As informações são formatadas em duas linhas e renderizadas na área de informações.
+**•	Exibir_Texto():** Exibe a média de intensidade e o desvio padrão. Classifica a imagem como clara, média ou escura e com contraste baixo, médio ou alto. As informações são formatadas em duas linhas e renderizadas na área de informações.
 •	Analisar_Histograma(): Calcula a média de intensidade e o desvio padrão de um histograma, aplicando as fórmulas estatísticas.
 
-•	Equalizar(): Equaliza o histograma e cria uma nova textura para a imagem. Primeiro, inicializa histograma_equalizado e obtém o total de pixels. Em seguida, preenche um array de mapeamento, que associa cada intensidade a um novo valor equalizado. Por fim, cria a surface_equalizada, mapeia os pixels da superfície original para a nova intensidade e atualiza a textura da imagem principal.
+**•	Equalizar():** Equaliza o histograma e cria uma nova textura para a imagem. Primeiro, inicializa histograma_equalizado e obtém o total de pixels. Em seguida, preenche um array de mapeamento, que associa cada intensidade a um novo valor equalizado. Por fim, cria a surface_equalizada, mapeia os pixels da superfície original para a nova intensidade e atualiza a textura da imagem principal.
 
-•	DesenharBotao(): Desenha o botão na janela filha. O texto do botão muda para "Equalizado" ou "Original" dependendo da variável equalizado. O tamanho do botão é definido com base no tamanho do texto, e ele é posicionado na área de informações.
-•	MouseNoBotao(): Verifica se o cursor está sobre o botão. A função obtém as coordenadas globais do mouse e da janela filha para determinar se o clique ocorreu dentro da área do botão.
+**•	DesenharBotao():** Desenha o botão na janela filha. O texto do botão muda para "Equalizado" ou "Original" dependendo da variável equalizado. O tamanho do botão é definido com base no tamanho do texto, e ele é posicionado na área de informações.
+**•	MouseNoBotao():** Verifica se o cursor está sobre o botão. A função obtém as coordenadas globais do mouse e da janela filha para determinar se o clique ocorreu dentro da área do botão.
 
-•	Salvar_Imagem(): Salva a imagem atualmente exibida. A função verifica o estado da variável equalizado para salvar a superfície correta (a original ou a equalizada) em um arquivo chamado "output_image.png".
+**•	Salvar_Imagem():** Salva a imagem atualmente exibida. A função verifica o estado da variável equalizado para salvar a superfície correta (a original ou a equalizada) em um arquivo chamado "output_image.png".
 
 ________________________________________
 
