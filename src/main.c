@@ -170,6 +170,8 @@ void DesenharBotao(SDL_Renderer* renderer, Button* button, SDL_Color buttonColor
 //Verifica se mouse esta em cima do botao
 bool MouseNoBotao();
 
+//Salva imagem que esta sendo exibida atualmente
+void Salvar_Imagem();
 
 //------------------------------------------------------------------------------
 //
@@ -1135,7 +1137,12 @@ static void loop(void)
           }
           break;
 
-   
+        //Ao pressionar S
+        case SDL_EVENT_KEY_DOWN:
+          if (event.key.key == SDLK_S) {
+              Salvar_Imagem();
+          }
+          break;
       }
     }
     if(must_refresh){
