@@ -29,17 +29,17 @@ all: $(TARGET)
 
 # Comandos especificos para Windows (del, copy).
 clean:
-    del /S *.o
-    del /S $(SDL_DLL_FILE)
-    del /S $(SDL_IMAGE_DLL_FILE)
-    del /S $(SDL_TTF_DLL_FILE)
-    del /S $(TARGET).exe
+	del /S *.o
+	del /S $(SDL_DLL_FILE)
+	del /S $(SDL_IMAGE_DLL_FILE)
+	del /S $(SDL_TTF_DLL_FILE)
+	del /S $(TARGET).exe
 
 $(TARGET): $(OBJ)
-    $(CC) $(CFLAGS) $(INC_DIRS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
-    copy $(SDL_DLL_DIR)\\$(SDL_DLL_FILE) .\\$(SDL_DLL_FILE)
-    copy $(SDL_DLL_DIR)\\$(SDL_IMAGE_DLL_FILE) .\\$(SDL_IMAGE_DLL_FILE)
-    copy $(SDL_DLL_DIR)\\$(SDL_TTF_DLL_FILE) .\\$(SDL_TTF_DLL_FILE)
+	$(CC) $(CFLAGS) $(INC_DIRS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
+	copy $(SDL_DLL_DIR)\\$(SDL_DLL_FILE) .\\$(SDL_DLL_FILE)
+	copy $(SDL_DLL_DIR)\\$(SDL_IMAGE_DLL_FILE) .\\$(SDL_IMAGE_DLL_FILE)
+	copy $(SDL_DLL_DIR)\\$(SDL_TTF_DLL_FILE) .\\$(SDL_TTF_DLL_FILE)
 
 %.o: %.c $(INC)
-    $(CC) $(CFLAGS) $(INC_DIRS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INC_DIRS) -c $< -o $@

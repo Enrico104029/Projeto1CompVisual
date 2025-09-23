@@ -95,6 +95,9 @@ static Button button = {
 // Janela filha
 static MyWindow child_window = { .window = NULL, .renderer = NULL };
 
+// Array para armazenar intensidades
+int histograma[256];
+
 //Fonte do texto
 TTF_Font* fonte;
 
@@ -132,6 +135,20 @@ static void MyImage_GrayScale(SDL_Renderer *renderer, MyImage *image);
 
 //Verifica se uma imagem esta em escala de cinza
 static bool MyImage_IsGrayScale(MyImage *image);
+
+//Preenche um array(histograma) com quantidade de pixeis em cada nivel de intensidade 
+//baseado em uma superficie
+static bool Gerar_Histograma(SDL_Surface *surface, int* histograma);
+
+//Desenha histograma
+void Desenhar_Histograma(SDL_Renderer* renderer, const int* histograma, int width, int height);
+
+// Devolve a media de intensidade e o desvio padrao do histograma
+void Analisar_Histograma(const int* histograma, int* media_intensidade, double* desvio_padrao);
+
+//Exibe media de intensidade , desvio padrao e suas classificacoes na tela
+void Exibir_Texto(SDL_Renderer* renderer, int media_intensidade, double desvio_padrao);
+
 
 //------------------------------------------------------------------------------
 //
@@ -432,6 +449,16 @@ void render(void)
   //Renderizar textura da imagem
   SDL_RenderTexture(g_window.renderer, g_image.texture, &g_image.rect,&g_image.rect);
 
+  int media;
+  double desvio;
+
+  //Desenha o histograma
+  Desenhar_Histograma(child_window.renderer, histograma, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT- INFO_HEIGHT);
+  Analisar_Histograma(histograma, &media, &desvio);
+
+  //Exibir informaoes de de media e desvio padrao
+  Exibir_Texto(child_window.renderer, media, desvio);
+
   SDL_RenderPresent(g_window.renderer);
   SDL_RenderPresent(child_window.renderer);
   SDL_Log("<<< render()");
@@ -539,6 +566,247 @@ static bool MyImage_IsGrayScale(MyImage *image)
   return true;
 }
 
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+
+//Preenche um array(histograma) com quantidade de pixeis em cada nivel de intensidade 
+//baseado em uma superficie
+static bool Gerar_Histograma(SDL_Surface *surface, int* histograma)
+{
+  SDL_Log(">>> Gerar_Histograma()");
+  if (!surface)
+  {
+    SDL_Log("\t*** Erro: Superficie inválida (surface == NULL).");
+    SDL_Log("<<< Gerar_Histograma()");
+    return false;
+  }
+
+  // Inicializa o histograma 
+  for (int i = 0; i < 256; i++) {
+      histograma[i] = 0;
+  }
+
+  SDL_LockSurface(surface);
+  const SDL_PixelFormatDetails *format = SDL_GetPixelFormatDetails(surface->format);
+  const size_t pixelCount = surface->w * surface->h;
+
+  Uint32 *pixels = (Uint32 *)surface->pixels;
+  Uint8 r = 0;
+  Uint8 g = 0;
+  Uint8 b = 0;
+  Uint8 a = 0;
+
+  /*Para cada pixel da superficie, incrementa a intensidade correspondente no histograma*/
+  for (size_t i = 0; i < pixelCount; ++i)
+  {
+    SDL_GetRGBA(pixels[i], format, NULL, &r, &g, &b, &a);
+    
+    histograma[r] ++ ;
+  }
+
+   SDL_UnlockSurface(surface);
+   SDL_Log("<<< Gerar_Histograma()");
+  //Se todos os pixels tem valores r, g e b iguais,
+  return true;
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+
+//Desenha o histograma na janela filha
+void Desenhar_Histograma(SDL_Renderer* renderer, const int* histograma_parametro, int width, int height)
+{
+  SDL_Log(">>> Desenhar_Histograma()");
+
+  // Encontra o valor máximo para a escala
+  int max_value = 0;
+  for (int i = 0; i < 256; i++) {
+      if (histograma_parametro[i] > max_value) {
+          max_value = histograma_parametro[i];
+      }
+  }
+  
+  // Cor das barras do histograma (branco)
+  SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+
+  // Desenha uma barra para cada intensidade
+  for (int i = 0; i < 256; i++) {
+
+      // Obter altura da barra
+      float altura_barra ;
+      if (histograma_parametro[i] > 0)
+      {
+        altura_barra = (float)histograma_parametro[i] / max_value;
+      }else{
+        altura_barra = 0;
+      }
+      
+      int altura_barra_pixels = (int)(altura_barra * height);
+
+      //Posição e dimensões da barra
+      int x = round(i * ((float)width / (float)256));
+      int y1 = height;
+      int y2 = height - altura_barra_pixels;
+
+      // Desenha a linha
+      SDL_RenderLine(renderer, x, y1, x, y2);
+  }
+  
+
+  SDL_Log("<<< Desenhar_Histograma()");
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+
+void Exibir_Texto(SDL_Renderer* renderer, int media_intensidade, double desvio_padrao)
+{
+  SDL_Log(">>> Exibir_Texto()");
+  SDL_Color textColor = {255, 255, 255, 255};
+
+  char claridade[7]  ;
+  //Classificar imagem como clara escura ou media
+  if (media_intensidade <=85){
+      strcpy(claridade, "Escura");
+  }
+  else{
+    if(media_intensidade <=170){
+      strcpy(claridade, "Media");
+    }
+    else{
+      strcpy(claridade, "Clara");
+    }
+  }
+
+  char contraste[7]  ;
+  //Classificar imagem com contraste baixo, medio ou alto
+  if (desvio_padrao <=50){
+      strcpy(contraste, "Baixo");
+  }
+  else{
+    if(desvio_padrao <=90){
+      strcpy(contraste, "Medio");
+    }
+    else{
+      strcpy(contraste, "Alto");
+    }
+  }
+
+  //linhas de texto para exibir
+  char linha1[100];
+  char linha2[100];
+
+  //formatar strings completas
+  snprintf(linha1, 100, "Media intensidade: %d -> Imagem %s", media_intensidade, claridade);
+  snprintf(linha2, 100, "Desvio Padrao: %.2f -> %s Contraste", desvio_padrao,contraste);
+
+  //tamanhos
+  size_t linha1_length = strlen(linha1);
+  size_t linha2_length = strlen(linha2);
+
+  /*
+    Linha 1
+  */
+  SDL_Surface* textSurface = TTF_RenderText_Blended(fonte, linha1,linha1_length,textColor);
+
+  if (!textSurface) {
+        SDL_Log("Erro ao renderizar texto: ");
+        return;
+  }
+
+  SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+  if (!textTexture) {
+      SDL_Log("Erro ao criar textura de texto: %s", SDL_GetError());
+      SDL_DestroySurface(textSurface);
+      return;
+  }
+  
+  SDL_DestroySurface(textSurface);
+
+  //Posicionamento linha 1
+  float linha1_w, linha1_h;
+  SDL_FRect textRect;
+
+  SDL_GetTextureSize(textTexture, &linha1_w, &linha1_h);
+  textRect.w = linha1_w;
+  textRect.h = linha1_h;
+  textRect.x = 10;
+  textRect.y = ((float)DEFAULT_WINDOW_HEIGHT- (INFO_HEIGHT/2)) - (linha1_h + 5);
+  
+
+  //Renderizar linha 1
+  SDL_RenderTexture(renderer, textTexture, NULL, &textRect);
+
+  /*
+    Linha 2
+  */
+  textSurface = TTF_RenderText_Blended(fonte, linha2,linha2_length,textColor);
+
+  if (!textSurface) {
+        SDL_Log("Erro ao renderizar texto: ");
+        return;
+  }
+
+  textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+  if (!textTexture) {
+      SDL_Log("Erro ao criar textura de texto: %s", SDL_GetError());
+      SDL_DestroySurface(textSurface);
+      return;
+  }
+  
+  SDL_DestroySurface(textSurface);
+
+  //Posicionamento linha 2
+  float linha2_w, linha2_h;
+
+  SDL_GetTextureSize(textTexture, &linha2_w, &linha2_h);
+  textRect.w = linha2_w;
+  textRect.h = linha2_h;
+  textRect.x = 10;
+  textRect.y = textRect.y+ linha1_h + 10;
+
+
+  //Desenho linha 2
+  SDL_RenderTexture(renderer, textTexture, NULL, &textRect);
+
+  SDL_Log("<<< Exibir_Texto()");
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+
+// Devolve a media de intensidade e o desvio padrao de um histograma
+void Analisar_Histograma(const int* histograma, int* media_intensidade, double* desvio_padrao)
+{
+  SDL_Log(">>> Analisar_Histograma()");
+  int total_pixels = 0;
+  int total_intensidades = 0;
+
+  //Calcular media
+  for(int i = 0; i < 256; i++){
+    total_pixels += histograma[i];
+    total_intensidades += histograma[i]* i;
+  }
+
+  *media_intensidade = total_intensidades/ total_pixels;
+
+  //Calcular desvio_padrao
+  double somatoria;
+    for (int i = 0; i < 256; ++i) {
+        float diferenca = i - *media_intensidade;
+        somatoria += (diferenca * diferenca) * histograma[i];
+    }
+  double variancia = somatoria / total_pixels;
+
+  *desvio_padrao = SDL_sqrt(variancia);
+ 
+  SDL_Log("<<< Analisar_Histograma()");
+}
+
 //******************************************************************************
 // ** FIM IMPLEMENTACOES DO PROJETO 1
 //******************************************************************************
@@ -633,6 +901,9 @@ int main(int argc, char *argv[])
   {
     MyImage_GrayScale(g_window.renderer, &g_image);
   }
+
+  // Criar histograma da imagem
+  Gerar_Histograma(g_image.surface, histograma);
 
   loop();
 
