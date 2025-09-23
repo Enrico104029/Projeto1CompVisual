@@ -1,5 +1,5 @@
 # Projeto1CompVisual
-##Grupo:
+## Grupo:
 
 Gabriel Shihao Chen Yin - 10408981 
 
