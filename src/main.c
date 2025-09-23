@@ -98,8 +98,21 @@ static MyWindow child_window = { .window = NULL, .renderer = NULL };
 // Array para armazenar intensidades
 int histograma[256];
 
+//fonte do texto
+int histograma_equalizado[256];
+
+//Superficie para armazenar pixels equalizados
+SDL_Surface *surface_equalizada = NULL;
+
 //Fonte do texto
 TTF_Font* fonte;
+
+//Variável que armazena se histograma esta equalizado
+bool equalizado = false;
+
+//Variaveis que armazenam o estado do botao
+int mouseNoBotao = false;
+int botaoClicado = false;
 
 //------------------------------------------------------------------------------
 // Function declaration
@@ -129,7 +142,6 @@ static void loop(void);
 */
 
 
-
 //Transforma a imagem em escala de cinza
 static void MyImage_GrayScale(SDL_Renderer *renderer, MyImage *image);
 
@@ -149,6 +161,15 @@ void Analisar_Histograma(const int* histograma, int* media_intensidade, double* 
 //Exibe media de intensidade , desvio padrao e suas classificacoes na tela
 void Exibir_Texto(SDL_Renderer* renderer, int media_intensidade, double desvio_padrao);
 
+//Preenche "histograma_equalizado e atualiza a textura da imagem"
+void Equalizar(MyImage* image, int* histograma );
+
+//Desenha o Botao com base no estado da imagem e com a cor passado no parametro
+void DesenharBotao(SDL_Renderer* renderer, Button* button, SDL_Color buttonColor);
+
+//Verifica se mouse esta em cima do botao
+bool MouseNoBotao();
+
 
 //------------------------------------------------------------------------------
 //
@@ -166,9 +187,9 @@ bool MyWindow_initialize(MyWindow *window, const char *title, int width, int hei
   return SDL_CreateWindowAndRenderer(title, width, height, window_flags, &window->window, &window->renderer);
 }
 
-// //------------------------------------------------------------------------------
-// //
-// //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 void MyWindow_destroy(MyWindow *window)
 {
   SDL_Log(">>> MyWindow_destroy()");
@@ -225,9 +246,9 @@ void MyImage_destroy(MyImage *image)
   SDL_Log("<<< MyImage_destroy()");
 }
 
-// //------------------------------------------------------------------------------
-// //
-// //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// 
+//------------------------------------------------------------------------------
 bool MyImage_update_texture_with_surface(MyImage* image, SDL_Renderer *renderer, SDL_Surface *surface)
 {
   SDL_Log(">>> MyImage_update_texture_with_surface()");
@@ -270,9 +291,9 @@ bool MyImage_update_texture_with_surface(MyImage* image, SDL_Renderer *renderer,
   return true;
 }
 
-// //------------------------------------------------------------------------------
-// //
-// //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 bool MyImage_restore_texture(MyImage* image, SDL_Renderer *renderer)
 {
   SDL_Log(">>> MyImage_restore_texture()");
@@ -286,6 +307,10 @@ bool MyImage_restore_texture(MyImage* image, SDL_Renderer *renderer)
   SDL_Log("<<< MyImage_restore_texture()");
   return true;  
 }
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 
 bool load_rgba32(const char *caminho, SDL_Renderer *renderer, MyImage *output_image)
 {
@@ -420,6 +445,10 @@ void shutdown(void)
   defaultMouseCursor = NULL;
   hourglassMouseCursor = NULL;
 
+  SDL_Log("Destruindo superfície extra ...");
+  SDL_DestroySurface(surface_equalizada);
+  surface_equalizada = NULL;
+
   MyImage_destroy(&g_image);
   MyWindow_destroy(&g_window);
   MyWindow_destroy(&child_window);
@@ -434,6 +463,7 @@ void shutdown(void)
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
+
 //Renderiza imagem e janela filha com base na variavel "equalizado"
 void render(void)
 {
@@ -446,23 +476,45 @@ void render(void)
   SDL_SetRenderDrawColor(child_window.renderer, 20, 20, 20, 255);
   SDL_RenderClear(child_window.renderer);
 
-  //Renderizar textura da imagem
-  SDL_RenderTexture(g_window.renderer, g_image.texture, &g_image.rect,&g_image.rect);
-
   int media;
   double desvio;
 
-  //Desenha o histograma
-  Desenhar_Histograma(child_window.renderer, histograma, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT- INFO_HEIGHT);
-  Analisar_Histograma(histograma, &media, &desvio);
+  // Equalizar ou restaurar imagem com base na variavel
+  if (equalizado) {
+    Equalizar(&g_image, histograma);
+    Desenhar_Histograma(child_window.renderer, histograma_equalizado, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT- INFO_HEIGHT);
+    Analisar_Histograma(histograma_equalizado, &media, &desvio);
+  } else {
+    MyImage_restore_texture(&g_image, g_window.renderer);
+    Desenhar_Histograma(child_window.renderer, histograma, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT- INFO_HEIGHT);
+    Analisar_Histograma(histograma, &media, &desvio);;
+  }
 
   //Exibir informaoes de de media e desvio padrao
   Exibir_Texto(child_window.renderer, media, desvio);
+
+  //Renderizar textura da imagem
+  SDL_RenderTexture(g_window.renderer, g_image.texture, &g_image.rect,&g_image.rect);
+
+  // Desenhar o botao com base no seu estado atual
+  if (mouseNoBotao) {
+    if(botaoClicado){
+      DesenharBotao(child_window.renderer, &button, CLICKED_COLOR);
+    }
+    else{
+      DesenharBotao(child_window.renderer, &button, HOVER_COLOR);
+    }
+    
+  } else  {
+    DesenharBotao(child_window.renderer, &button, NEUTRAL_COLOR);
+  }
+ 
 
   SDL_RenderPresent(g_window.renderer);
   SDL_RenderPresent(child_window.renderer);
   SDL_Log("<<< render()");
 }
+
 
 //******************************************************************************
 // **IMPLEMENTACOES DO PROJETO 1
@@ -610,7 +662,6 @@ static bool Gerar_Histograma(SDL_Surface *surface, int* histograma)
   //Se todos os pixels tem valores r, g e b iguais,
   return true;
 }
-
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
@@ -657,7 +708,6 @@ void Desenhar_Histograma(SDL_Renderer* renderer, const int* histograma_parametro
 
   SDL_Log("<<< Desenhar_Histograma()");
 }
-
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
@@ -775,6 +825,7 @@ void Exibir_Texto(SDL_Renderer* renderer, int media_intensidade, double desvio_p
   SDL_Log("<<< Exibir_Texto()");
 }
 
+
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
@@ -806,10 +857,212 @@ void Analisar_Histograma(const int* histograma, int* media_intensidade, double* 
  
   SDL_Log("<<< Analisar_Histograma()");
 }
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+
+//Equaliza o histograma e atualiza a imagem
+void Equalizar(MyImage* image, int* histograma )
+{
+  SDL_Log(">>> Equalizar()");
+
+  //array para armazenar mapeamento de cada intensidade
+  double mapeamento[256];
+
+  //obter total de pixels e inicializar o histograma equalizado e mapeamento
+  int total_pixels = 0;
+  for(int i = 0; i < 256; i++){
+    total_pixels += histograma[i];
+    histograma_equalizado[i] = 0;
+  }
+
+  // Preencher tabela de mapeamento
+  for(int i = 0; i < 256; i++){
+    double prob_ocorr = (double)histograma[i] / total_pixels;
+    if(i == 0){
+      mapeamento[i] = 255 * prob_ocorr;
+    }
+    else{
+      mapeamento[i] = mapeamento[i-1] + (255 * prob_ocorr);
+    }
+
+    histograma_equalizado[(int)round(mapeamento[i])] += histograma[i];
+
+  }
+    
+  //Desenha histograma equalizado
+  Desenhar_Histograma(child_window.renderer, histograma_equalizado, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT- INFO_HEIGHT);
+
+  // Mapear pixels da superficie para superficie_equalizada
+  const SDL_PixelFormatDetails *format = SDL_GetPixelFormatDetails(image->surface->format);
+
+  //Crie superficie equalizada a partir do histograma
+  surface_equalizada = SDL_CreateSurface(image->surface->w, image->surface->h, image->surface->format);
+  if (!surface_equalizada){
+    {
+      SDL_Log("*** Erro: Superfície extra (equalizada) inválida!");
+      return ;
+    }
+  }
+
+  
+  SDL_LockSurface(image->surface);
+  SDL_LockSurface(surface_equalizada);
+
+  const size_t pixelCount = image->surface->w * image->surface->h;
+
+  Uint32 *pixels = (Uint32 *) image->surface->pixels;
+  Uint32 *output = (Uint32 *) surface_equalizada->pixels;
+
+  Uint8 r = 0;
+  Uint8 g = 0;
+  Uint8 b = 0;
+  Uint8 a = 0;
+
+  //Para cara pixel da imagem, trocar sua intensidade pela obtida
+  // apos equalizar o histograma e salva no mapeamento
+  for (size_t i = 0; i < pixelCount; ++i)
+  {
+    SDL_GetRGBA(pixels[i], format, NULL, &r, &g, &b, &a);
+
+    int intensidade_alterada = (int)round(mapeamento[r]);
+    output[i] = SDL_MapRGBA(format, NULL, intensidade_alterada, intensidade_alterada, intensidade_alterada, a);
+  }
+
+  SDL_UnlockSurface(image->surface);
+  SDL_UnlockSurface(surface_equalizada);
+
+  //Utiliza a nova superficie para atualizar a textura da imagem
+  MyImage_update_texture_with_surface(&g_image,g_window.renderer, surface_equalizada);
+
+  SDL_Log("<<< Equalizar()");
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+
+//Desenha o Botao com base no estado da imagem e com a cor passado no parametro
+void DesenharBotao(SDL_Renderer* renderer, Button* button, SDL_Color buttonColor)
+{
+  SDL_Color textColor = {255, 255, 255, 255};
+
+  // Desenha o retângulo do botão
+  SDL_SetRenderDrawColor(renderer, buttonColor.r, buttonColor.g, buttonColor.b, buttonColor.a);
+
+  //Alterar texto com base na equalizacao
+  if(equalizado){
+    button->text = "Equalizado";
+  }else{
+    button->text = "Original";
+  }
+
+  // Desenha o texto do botão
+  SDL_Surface* textSurface = TTF_RenderText_Blended(fonte, button->text, strlen(button->text), textColor);
+  if (!textSurface) {
+    SDL_Log("Erro ao renderizar texto do botao ");
+    return;
+  }
+
+  SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+  if (!textTexture) {
+      SDL_Log("Erro ao criar textura de texto: %s", SDL_GetError());
+      SDL_DestroySurface(textSurface);
+      return;
+  }
+  
+  SDL_DestroySurface(textSurface);
+
+  float text_w, text_h;
+  SDL_GetTextureSize(textTexture,&text_w, &text_h);
+
+  //Se o tamanho do botao ainda nao foi estabelecido,
+  //definir tamanho do botao com tamanho do texto
+  if(button->rect.w == 0) {
+    button->rect.w = text_w + 60;
+    button->rect.h = text_h + 40;
+    button->rect.x = DEFAULT_WINDOW_WIDTH - button->rect.w - 20;
+    button->rect.y = DEFAULT_WINDOW_HEIGHT - (INFO_HEIGHT / 2) - (button->rect.h/2);
+  }
+
+  //Retangulo de posicao do texto
+  SDL_FRect textRect = {
+      (float)button->rect.x + (button->rect.w - text_w) / 2,
+      (float)button->rect.y + (button->rect.h - text_h) / 2,
+      (float)text_w,
+      (float)text_h
+  };
+
+  // Desenhar botao e texto
+  SDL_RenderFillRect(renderer, &button->rect);
+  SDL_RenderTexture(renderer, textTexture, NULL, &textRect);
+
+  SDL_DestroyTexture(textTexture);
+  
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+
+//Verifica se mouse esta em cima do botao
+bool MouseNoBotao()
+{
+    // Pega as coordenadas globais do mouse 
+    float mouse_x, mouse_y;
+    SDL_GetGlobalMouseState(&mouse_x, &mouse_y);
+
+    // Obtém a posição da janela filha na tela
+    int child_x, child_y;
+    SDL_GetWindowPosition(child_window.window, &child_x, &child_y);
+
+    // Converte as coordenadas do botão (relativas à janela filha) para coordenadas da tela
+    int button_x_global = button.rect.x + child_x;
+    int button_y_global = button.rect.y + child_y;
+    int button_w = button.rect.w;
+    int button_h = button.rect.h;
+
+    // Realiza a verificação usando as coordenadas globais
+    return (mouse_x >= button_x_global && mouse_x <= button_x_global + button_w &&
+            mouse_y >= button_y_global && mouse_y <= button_y_global + button_h);
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+
+//Salva a imagem atual
+void Salvar_Imagem()
+{
+  SDL_Log(">>> Salvar_Imagem()");
+  SDL_Surface* superficie = NULL;
+
+  // Verifica qual superfície deve ser salva com base na variável 'equalizado'
+  if (equalizado) {
+      superficie = surface_equalizada;
+  } else {
+      superficie = g_image.surface;
+  }
+
+  // Verifica se a superficie é valida
+  if (superficie == NULL) {
+      SDL_Log("Erro: Nenhuma superfície de imagem válida para salvar.");
+      SDL_Log("<<< Salvar_Imagem()");
+      return;
+  }
+  
+  // Salva a superficie no arquivo,sobrescreve se ja existir
+
+  IMG_SavePNG(superficie, "output_image.png");
+  SDL_Log("<<< Salvar_Imagem()");
+}
+
 
 //******************************************************************************
 // ** FIM IMPLEMENTACOES DO PROJETO 1
 //******************************************************************************
+
+
 static void loop(void)
 {
   SDL_Log(">>> loop()");
@@ -837,6 +1090,52 @@ static void loop(void)
             isRunning = false;
           }
           break;
+
+        //Ao mexer o mouse
+        case SDL_EVENT_MOUSE_MOTION:
+          // Checar se estado do botao deve mudar
+          if (MouseNoBotao() != mouseNoBotao) {
+            must_refresh = true;
+          }
+          mouseNoBotao = MouseNoBotao();
+
+          // Se mouse nao estiver no botao, nao esta clicando
+          if(!mouseNoBotao){
+            botaoClicado = false;
+          }
+          break;
+        
+        //Ao clicar na tela
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+          if (event.button.button == SDL_BUTTON_LEFT) {
+           
+            if (MouseNoBotao( )) {
+             
+              botaoClicado = true;
+              must_refresh = true;
+            } 
+          }
+          break;
+
+        //Ao parar de clicar
+        case SDL_EVENT_MOUSE_BUTTON_UP:
+          if (event.button.button == SDL_BUTTON_LEFT) 
+          {
+             //Se mouse estiver no botao = click = trocar variavel equalizado
+             if (MouseNoBotao( )) {
+              if (equalizado) {
+                  equalizado = false;
+                } else {
+                  equalizado = true;
+                }
+
+                botaoClicado = false;
+                must_refresh = true;
+             }
+          }
+          break;
+
+   
       }
     }
     if(must_refresh){
@@ -859,14 +1158,14 @@ int main(int argc, char *argv[])
       printf("Por favor escreva o caminho da imagem: %s <caminho_da_imagem.ext>\n", argv[0]);
       return 1;
   }
-  const char *caminho_da_imagem = argv[1];
+     const char *caminho_da_imagem = argv[1];
 
   if (initialize() == SDL_APP_FAILURE)
     return SDL_APP_FAILURE;
 
   if (!load_rgba32(caminho_da_imagem, g_window.renderer, &g_image))
     return SDL_APP_FAILURE;
-  
+
   SDL_Log("Criando cursores do mouse...");
   defaultMouseCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
   hourglassMouseCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
@@ -882,6 +1181,7 @@ int main(int argc, char *argv[])
   // Coloca a janela principal no centro
   SDL_SetWindowPosition(g_window.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
   SDL_SyncWindow(g_window.window);
+
 
   /*
     Colocar a janela filha ao lado da janela pai
@@ -901,10 +1201,11 @@ int main(int argc, char *argv[])
   {
     MyImage_GrayScale(g_window.renderer, &g_image);
   }
-
+  
   // Criar histograma da imagem
   Gerar_Histograma(g_image.surface, histograma);
 
+  //Exibir botao
   loop();
 
   return 0;
