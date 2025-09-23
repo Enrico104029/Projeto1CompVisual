@@ -98,6 +98,16 @@ o	Gera o histograma da imagem original.
 
 o	Inicia o loop principal do programa.
 
+________________________________________
+
+## Process de compilação e execução
+
+1. Clone o github
+2. Verifique se as bibliotecas sdl, sdlimage e sdl ttf estao instaladas
+3. Dentro do makefile, altere SDL_DIR, para o caminho correto de onde SDL3 está instalado na sua máquina
+4. Apos isso, no terminal, entre na pasta src
+5. Digite mingw32-make para compilar
+6. Para executar, digite: './main <caminho_da_imagem>' (ex: ./main "imagem.jpg")
 
 	
 	
