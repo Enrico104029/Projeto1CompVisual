@@ -103,17 +103,17 @@ ________________________________________
 # Instruções para Compilação e Execução
 Para compilar e executar o projeto, siga os passos abaixo:
 
-Clone o repositório do GitHub.
+1.Clone o repositório do GitHub.
 
-Instale as bibliotecas necessárias: Certifique-se de que as bibliotecas SDL3, SDL3_image e SDL3_ttf estão instaladas em seu sistema.
+2.**Instale as bibliotecas necessárias**: Certifique-se de que as bibliotecas SDL3, SDL3_image e SDL3_ttf estão instaladas em seu sistema.
 
-Ajuste o Makefile: Abra o arquivo Makefile e altere a variável SDL_DIR para o caminho onde a biblioteca SDL3 está instalada em sua máquina.
+3.**Ajuste o Makefile**: Abra o arquivo Makefile e altere a variável SDL_DIR para o caminho onde a biblioteca SDL3 está instalada em sua máquina.
 
-Acesse a pasta src: No terminal, navegue até a pasta src do projeto.
+4.**Acesse a pasta src**: No terminal, navegue até a pasta src do projeto.
 
-Compile o código: Digite mingw32-make para iniciar a compilação.
+5.**Compile o código**: Digite mingw32-make para iniciar a compilação.
 
-Execute o programa: Após a compilação, execute o programa usando o comando ./main <caminho_da_imagem>. Por exemplo: ./main "imagem.jpg".
+6.**Execute o programa**: Após a compilação, execute o programa usando o comando ./main <caminho_da_imagem>. Por exemplo: ./main "imagem.jpg".
 
 	
 	
