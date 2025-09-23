@@ -100,14 +100,20 @@ o	Inicia o loop principal do programa.
 
 ________________________________________
 
-## Process de compilação e execução
+# Instruções para Compilação e Execução
+Para compilar e executar o projeto, siga os passos abaixo:
 
-1. Clone o github
-2. Verifique se as bibliotecas sdl, sdlimage e sdl ttf estao instaladas
-3. Dentro do makefile, altere SDL_DIR, para o caminho correto de onde SDL3 está instalado na sua máquina
-4. Apos isso, no terminal, entre na pasta src
-5. Digite mingw32-make para compilar
-6. Para executar, digite: './main <caminho_da_imagem>' (ex: ./main "imagem.jpg")
+Clone o repositório do GitHub.
+
+Instale as bibliotecas necessárias: Certifique-se de que as bibliotecas SDL3, SDL3_image e SDL3_ttf estão instaladas em seu sistema.
+
+Ajuste o Makefile: Abra o arquivo Makefile e altere a variável SDL_DIR para o caminho onde a biblioteca SDL3 está instalada em sua máquina.
+
+Acesse a pasta src: No terminal, navegue até a pasta src do projeto.
+
+Compile o código: Digite mingw32-make para iniciar a compilação.
+
+Execute o programa: Após a compilação, execute o programa usando o comando ./main <caminho_da_imagem>. Por exemplo: ./main "imagem.jpg".
 
 	
 	
