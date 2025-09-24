@@ -14,9 +14,9 @@ ________________________________________
 
 ## Contribuições de cada pessoa
 
-Gabriel Shihao Chen Yin - Carregamento de imagem, converter imagem para escala de cinza e interface gráfica
-Samuel Lopes Pereira - Análise e exibição do histograma
-Enrico Najjar Galdeano - Equalização do histograma e Salvar imagem
+Gabriel Shihao Chen Yin - Carregamento de imagem, converter imagem para escala de cinza e interface gráfica  
+Samuel Lopes Pereira - Análise e exibição do histograma  
+Enrico Najjar Galdeano - Equalização do histograma e Salvar imagem  
 ________________________________________
 
 ## Novas Estruturas e Variáveis Globais
