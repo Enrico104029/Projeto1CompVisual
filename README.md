@@ -12,6 +12,13 @@ Samuel Lopes Pereira - 10403767
 Este projeto é um visualizador de imagens com ferramentas de análise e processamento. Ele carrega uma imagem, a converte para escala de cinza, gera e exibe seu histograma, e permite a equalização do histograma com um clique. Uma janela secundária mostra as análises da imagem, como a média de intensidade e o desvio padrão, juntamente com um botão para alternar entre as versões original e equalizada da imagem.
 ________________________________________
 
+## Contribuições de cada pessoa
+
+Gabriel Shihao Chen Yin - Carregamento de imagem, converter imagem para escala de cinza e interface gráfica
+Samuel Lopes Pereira - Análise e exibição do histograma
+Enrico Najjar Galdeano - Equalização do histograma e Salvar imagem
+________________________________________
+
 ## Novas Estruturas e Variáveis Globais
 
 **•	Button:** Uma nova struct foi criada para representar o botão de alternância, contendo suas dimensões (rect) e texto.
